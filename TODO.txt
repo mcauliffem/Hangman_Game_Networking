@@ -1,0 +1,9 @@
+1) setup server TCP connection functionality
+    - Right now I am in the process of using this tutorial to try to implement
+    the listener for multiple connections
+        >>https://realpython.com/python-sockets/#multi-connection-server
+2) write client TCP connection functionality
+3) write game logic
+4) implement command line interaction
+5) modify for multiple client multiplayer mode
+6) figure out how to allow only 3 concurrent games
