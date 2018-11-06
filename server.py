@@ -1,6 +1,7 @@
 import selectors
 import socket
 
+# I think that is localhost, not sure if we need to change the value?
 host = '127.0.0.1'  # The server's hostname or IP address
 port = 65432        # The port used by the server
 sel = selectors.DefaultSelector()
@@ -21,5 +22,29 @@ while True:
         else:
             service_connection(key, mask)
 
+# create and register new connection
+def accept_wrapper(sock):
+    conn, addr = sock.accept()  # Should be ready to read
+    print('accepted connection from', addr)
+    conn.setblocking(False)
+    data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
+    events = selectors.EVENT_READ | selectors.EVENT_WRITE
+    sel.register(conn, events, data=data)
+
+# deal with data from preexisting connections
 def service_connection(key, mask):
-    #deal with data received by the mask process
+    sock = key.fileobj
+    data = key.data
+    if mask & selectors.EVENT_READ:
+        recv_data = sock.recv(1024)  # Should be ready to read
+        if recv_data:
+            data.outb += recv_data
+        else:
+            print('closing connection to', data.addr)
+            sel.unregister(sock)
+            sock.close()
+    if mask & selectors.EVENT_WRITE:
+        if data.outb:
+            print('echoing', repr(data.outb), 'to', data.addr)
+            sent = sock.send(data.outb)  # Should be ready to write
+            data.outb = data.outb[sent:]

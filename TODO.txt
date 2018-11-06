@@ -2,7 +2,14 @@
     - Right now I am in the process of using this tutorial to try to implement
     the listener for multiple connections
         >>https://realpython.com/python-sockets/#multi-connection-server
+    - Currently this is not using a message format specified by me, it seems to be implicit, so we will need to change this (I believe there are som tips at the bottom of the tutorial)
+        >> Use Message Objects from and split files into libserver for messaging and appserver for logic
 2) write client TCP connection functionality
+    - Using same tutorial for multiconnection client
+    - Split client into libclient for messaging and appclient for logic.
+
+NOTE (1&2): ^^^ confusing code from tutorial, i am trying to make sense of it ^^^
+
 3) write game logic
 4) implement command line interaction
 5) modify for multiple client multiplayer mode

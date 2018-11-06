@@ -8,3 +8,5 @@ The game is built upon establishing TCP connections and using the accept() metho
 
 How to run our code:
 //complete once we have code :)
+    ./server.py <host> <port>
+    ./client.py <host> <port>
