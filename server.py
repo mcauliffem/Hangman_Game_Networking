@@ -1,6 +1,9 @@
 import selectors
 import socket
 
+# words
+word_bank = {'cat', 'dog', 'fish', 'bull', 'koala', 'otter', 'zebra', 'snakes', 'hippos', 'parrot', 'giraffe', 'penguin', 'tortoise', 'anaconda', 'mosquito'}
+
 # I think that is localhost, not sure if we need to change the value?
 host = '127.0.0.1'  # The server's hostname or IP address
 port = 65432        # The port used by the server
