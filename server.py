@@ -1,8 +1,15 @@
 import selectors
 import socket
+import random
 
 # words
 word_bank = {'cat', 'dog', 'fish', 'bull', 'koala', 'otter', 'zebra', 'snakes', 'hippos', 'parrot', 'giraffe', 'penguin', 'tortoise', 'anaconda', 'mosquito'}
+def choose_word():
+    return random.choice(word_bank)
+def parse_word(word):
+    chars = list(word)
+    return chars
+
 
 # I think that is localhost, not sure if we need to change the value?
 host = '127.0.0.1'  # The server's hostname or IP address
