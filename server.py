@@ -22,6 +22,12 @@ def make_blanks(letters):
 class Server:
     num_games = 0
     game_states = dict()
+    games = []
+
+class Game:
+    def __init__(multi):
+        multiplayer = multi
+        clients = []
 
 
 # create and register new connection
@@ -29,15 +35,24 @@ def accept_wrapper(sock):
     conn, addr = sock.accept()  # Should be ready to read
     print('accepted connection from', addr)
     conn.setblocking(False)
+
     data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(conn, events, data=data)
+
+    if len(Server.games) <= 3:
+        if len(Server.games) == 0:
+            game = Game()
+            Server.games.append(game)
+        #else:
+
 
     Server.num_games += 1
     letters = parse_word(choose_word())
     blanks = make_blanks(letters)
     #                       {numletters, full word, partial, incorret_num}
     Server.game_states[addr] = [len(letters), letters, blanks, 0, True, [], False, None]
+
 
 # deal with data from preexisting connections
 def service_connection(key, mask):

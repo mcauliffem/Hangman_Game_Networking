@@ -44,7 +44,7 @@ def receive_data_from_server(sock):
             print("\n" + word_itself + "\n" + "Incorrect Guesses: ", end="")
             for letter in incorrect_guesses:
                 print(letter, end="")
-            print("\n\n")
+            print("\n")
             valid_input = False
             guess = ""
             while valid_input == False:
