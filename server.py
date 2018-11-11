@@ -39,6 +39,8 @@ def service_connection(key, mask):
     data = key.data
     if mask & selectors.EVENT_READ:
         recv_data = sock.recv(1024)  # Should be ready to read
+        if recv_data == b'':
+            return
         print(recv_data)
         print(len(recv_data))
         if len(recv_data) > 0:
@@ -49,8 +51,8 @@ def service_connection(key, mask):
                 guesses = Server.game_states[sock.getsockname()][2]
                 data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
             else:
-                data_len = recv_data[0]
-                in_data = recv_data[1]
+                data_len = int(recv_data[0])
+                in_data = chr(int(recv_data[1]))
                 letters = Server.game_states[sock.getsockname()][1]
                 correct = False
                 for i in range(len(letters)):
@@ -62,8 +64,13 @@ def service_connection(key, mask):
                     if Server.game_states[sock.getsockname()][3] >= 6:
                         #game over
                         msg_flag = '9'
-                        data.outb += (msg_flag + b'YOU LOSE!')
-                        data.outb += (msg_flag + b'GAME OVER')
+                        data.outb += bytes(msg_flag + 'YOU LOSE!', 'utf-8')
+                        data.outb += bytes(msg_flag + 'GAME OVER', 'utf-8')
+                    msg_flag = '0'
+                    word_size = Server.game_states[sock.getsockname()][0]
+                    num_incorrect = Server.game_states[sock.getsockname()][3]
+                    guesses = Server.game_states[sock.getsockname()][2]
+                    data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
 
                 else:
                     all_correct = True
@@ -72,8 +79,9 @@ def service_connection(key, mask):
                             all_correct = False
                     if all_correct == True:
                         msg_flag = '9'
-                        data.outb += (msg_flag + b'YOU WIN!')
-                        data.outb += (msg_flag + b'GAME OVER')
+                        data.outb += bytes('8' + 'YOU WIN!', 'utf-8')
+                        data.outb += bytes(msg_flag + 'GAME OVER', 'utf-8')
+                        Server.game_states[sock.getsockname()][4] = False;
                     else:
                         msg_flag = '0'
                         word_size = Server.game_states[sock.getsockname()][0]
@@ -85,11 +93,17 @@ def service_connection(key, mask):
             sel.unregister(sock)
             sock.close()
             Server.num_games -= 1
+
     if mask & selectors.EVENT_WRITE:
         if data.outb:
             print('echoing', repr(data.outb), 'to', data.addr)
             sent = sock.send(data.outb)  # Should be ready to write
             data.outb = data.outb[sent:]
+            if Server.game_states[sock.getsockname()][4] == False:
+                print('closing connection to', data.addr)
+                sel.unregister(sock)
+                sock.close()
+                Server.num_games -= 1
 
 
 if __name__ == '__main__':
@@ -117,8 +131,9 @@ if __name__ == '__main__':
                     letters = parse_word(choose_word())
                     blanks = make_blanks(letters)
                     #                       {numletters, full word, partial, incorret_num}
-                    Server.game_states[key.fileobj.getsockname()] = [len(letters), letters, blanks, 0]
+                    Server.game_states[key.fileobj.getsockname()] = [len(letters), letters, blanks, 0, True]
                 else:
+                    key.fileobj.send(bytes(chr(16) + "server-overloaded", 'utf-8'))
                     key.fileobj.close()
             else:
                 service_connection(key, mask)
