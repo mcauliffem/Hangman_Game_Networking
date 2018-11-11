@@ -14,6 +14,7 @@ def parse_word(word):
     chars = list(word)
     return chars
 
+num_games = 0
 
 
 if __name__ == '__main__':
@@ -38,11 +39,15 @@ def main():
         events = sel.select(timeout=None)
         for key, mask in events:
             if key.data is None:
-                accept_wrapper(key.fileobj)
-                letters = parse_word(choose_word())
-                blanks = make_blanks(letters)
-                #                       {numletters, full word, partial, incorret_num}
-                game_states[key.data] = {len(letters), letters, blanks, 0}
+                if num_games < 3:
+                    accept_wrapper(key.fileobj)
+                    num_games += 1
+                    letters = parse_word(choose_word())
+                    blanks = make_blanks(letters)
+                    #                       {numletters, full word, partial, incorret_num}
+                    game_states[key.fileobj] = {len(letters), letters, blanks, 0}
+                else:
+                    key.fileobj.close()
             else:
                 service_connection(key, mask)
 
@@ -97,6 +102,7 @@ def service_connection(key, mask):
             print('closing connection to', data.addr)
             sel.unregister(sock)
             sock.close()
+            num_games -= 1
     if mask & selectors.EVENT_WRITE:
         if data.outb:
             print('echoing', repr(data.outb), 'to', data.addr)
