@@ -54,11 +54,10 @@ def service_connection(key, mask):
                 num_incorrect = Server.game_states[sock.getpeername()][3]
                 guesses = Server.game_states[sock.getpeername()][2]
                 data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
-            if recv_data == b'12':
+            elif recv_data == b'12':
                 found = False
                 for state_key in list(Server.game_states.keys()):
                     print(state_key)
-                    print(Server.game_states[state_key][6])
                     if Server.game_states[state_key][6] == False and Server.game_states[state_key] != Server.game_states[sock.getpeername()] and found == False:
                         Server.game_states[state_key][6] = True
                         Server.game_states[sock.getpeername()] = Server.game_states[state_key]
@@ -74,6 +73,7 @@ def service_connection(key, mask):
                         Server.game_states[sock.getpeername()][7].data.outb += bytes(chr(36) + 'Waiting for other player to guess...', 'utf-8')
                     print(Server.game_states[state_key][6])
                 if found == False:
+                    Server.num_games -= 1
                     Server.game_states[sock.getpeername()][7] = key
                     data.outb += bytes(chr(27) + 'Waiting for another player!', 'utf-8')
             else:
@@ -119,22 +119,28 @@ def service_connection(key, mask):
                         data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses)) + incorrect).encode('UTF-8')
         else:
             print('closing connection to', data.addr)
+            Server.game_states.pop(sock.getpeername())
             sel.unregister(sock)
             sock.close()
             Server.num_games -= 1
-            del Server.game_states[sock.getpeername()]
+
 
     if mask & selectors.EVENT_WRITE:
         if data.outb:
             print('echoing', repr(data.outb), 'to', data.addr)
             sent = sock.send(data.outb)  # Should be ready to write
             data.outb = data.outb[sent:]
+            if Server.game_states[sock.getpeername()][7] != None and Server.game_states[sock.getpeername()][7].data.outb:
+                print('echoing', repr(Server.game_states[sock.getpeername()][7].data.outb), 'to', Server.game_states[sock.getpeername()][7].data.addr)
+                sent = Server.game_states[sock.getpeername()][7].fileobj.send(Server.game_states[sock.getpeername()][7].data.outb)
+                Server.game_states[sock.getpeername()][7].data.outb = Server.game_states[sock.getpeername()][7].data.outb[sent:]
             if Server.game_states[sock.getpeername()][4] == False:
                 print('closing connection to', data.addr)
+                Server.game_states.pop(sock.getpeername())
                 sel.unregister(sock)
                 sock.close()
                 Server.num_games -= 1
-                del Server.game_states[sock.getpeername()]
+
 
 
 if __name__ == '__main__':
