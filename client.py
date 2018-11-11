@@ -1,4 +1,4 @@
-import selectors
+import select
 import socket
 import sys
 
