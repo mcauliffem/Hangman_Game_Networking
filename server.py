@@ -39,38 +39,47 @@ def service_connection(key, mask):
     data = key.data
     if mask & selectors.EVENT_READ:
         recv_data = sock.recv(1024)  # Should be ready to read
-        if recv_data:
-            data_len = recv_data[0]
-            in_data = recv_data[1]
-            letters = Server.game_states[str(sock)][1]
-            correct = False
-            for i in range(len(letters)):
-                if letters[i] == in_data:
-                    Server.game_states[str(sock)][2][i] = letters[i]
-                    correct = True
-            if correct == False:
-                Server.game_states[str(sock)][3] += 1
-                if Server.game_states[str(sock)][3] >= 6:
-                    #game over
-                    msg_flag = '8'
-                    data.outb += (msg_flag + b'YOU LOSE')
-                    data.outb += (msg_flag + b'GAMEOVER')
-
+        print(recv_data)
+        print(len(recv_data))
+        if len(recv_data) > 0:
+            if recv_data == b'10':
+                msg_flag = '0'
+                word_size = Server.game_states[sock.getsockname()][0]
+                num_incorrect = Server.game_states[sock.getsockname()][3]
+                guesses = Server.game_states[sock.getsockname()][2]
+                data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
             else:
-                all_correct = True
+                data_len = recv_data[0]
+                in_data = recv_data[1]
+                letters = Server.game_states[sock.getsockname()][1]
+                correct = False
                 for i in range(len(letters)):
-                    if Server.game_states[str(sock)][2][i] != letters[i]:
-                        all_correct = False
-                if all_correct == True:
-                    msg_flag = '8'
-                    data.outb += (msg_flag + b'YOU WIN!')
-                    data.outb += (msg_flag + b'GAMEOVER')
+                    if letters[i] == in_data:
+                        Server.game_states[sock.getsockname()][2][i] = letters[i]
+                        correct = True
+                if correct == False:
+                    Server.game_states[sock.getsockname()][3] += 1
+                    if Server.game_states[sock.getsockname()][3] >= 6:
+                        #game over
+                        msg_flag = '9'
+                        data.outb += (msg_flag + b'YOU LOSE!')
+                        data.outb += (msg_flag + b'GAME OVER')
+
                 else:
-                    msg_flag = '0'
-                    word_size = Server.game_states[str(sock)][0].to_bytes(1, byteorder='big', signed=True)
-                    num_incorrect = Server.game_states[str(sock)][3].to_bytes(1, byteorder='big', signed=True)
-                    guesses = Server.game_states[str(sock)][2].to_bytes(1, byteorder='big', signed=True)
-                    data.outb += (msg_flag + word_size + num_incorrect + guesses)
+                    all_correct = True
+                    for i in range(len(letters)):
+                        if Server.game_states[sock.getsockname()][2][i] != letters[i]:
+                            all_correct = False
+                    if all_correct == True:
+                        msg_flag = '9'
+                        data.outb += (msg_flag + b'YOU WIN!')
+                        data.outb += (msg_flag + b'GAME OVER')
+                    else:
+                        msg_flag = '0'
+                        word_size = Server.game_states[sock.getsockname()][0]
+                        num_incorrect = Server.game_states[sock.getsockname()][3]
+                        guesses = Server.game_states[sock.getsockname()][2]
+                        data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
         else:
             print('closing connection to', data.addr)
             sel.unregister(sock)
@@ -108,7 +117,7 @@ if __name__ == '__main__':
                     letters = parse_word(choose_word())
                     blanks = make_blanks(letters)
                     #                       {numletters, full word, partial, incorret_num}
-                    Server.game_states[str(key.fileobj)] = [len(letters), letters, blanks, 0]
+                    Server.game_states[key.fileobj.getsockname()] = [len(letters), letters, blanks, 0]
                 else:
                     key.fileobj.close()
             else:

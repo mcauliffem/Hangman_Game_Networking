@@ -15,6 +15,7 @@ def send_data_to_server(message, socket):
     message_length = str(len(message)).encode('UTF-8')
     final_message = b"".join([message_length, message_converted])
     socket.send(final_message)
+    print(final_message)
 
 def receive_data_from_server(socket):
     data = socket.recv(1024).decode('UTF-8')
