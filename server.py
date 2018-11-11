@@ -37,7 +37,7 @@ def accept_wrapper(sock):
     letters = parse_word(choose_word())
     blanks = make_blanks(letters)
     #                       {numletters, full word, partial, incorret_num}
-    Server.game_states[addr] = [len(letters), letters, blanks, 0, True, [], False]
+    Server.game_states[addr] = [len(letters), letters, blanks, 0, True, [], False, None]
 
 # deal with data from preexisting connections
 def service_connection(key, mask):
@@ -62,9 +62,19 @@ def service_connection(key, mask):
                     if Server.game_states[state_key][6] == False and Server.game_states[state_key] != Server.game_states[sock.getpeername()] and found == False:
                         Server.game_states[state_key][6] = True
                         Server.game_states[sock.getpeername()] = Server.game_states[state_key]
+                        Server.game_states[state_key][7] = key
                         found = True
                         data.outb += bytes(chr(16) + 'Players Matched!', 'utf-8')
+
+                        msg_flag = chr(0)
+                        word_size = Server.game_states[sock.getpeername()][0]
+                        num_incorrect = Server.game_states[sock.getpeername()][3]
+                        guesses = Server.game_states[sock.getpeername()][2]
+                        data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
+                        Server.game_states[sock.getpeername()][7].data.outb += bytes(chr(36) + 'Waiting for other player to guess...', 'utf-8')
+                    print(Server.game_states[state_key][6])
                 if found == False:
+                    Server.game_states[sock.getpeername()][7] = key
                     data.outb += bytes(chr(27) + 'Waiting for another player!', 'utf-8')
             else:
                 data_len = int(recv_data[0])
