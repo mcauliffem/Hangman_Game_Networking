@@ -61,17 +61,11 @@ if __name__ == "__main__":
 
     while playing:
 
-        socket_list = [sys.stdin, my_socket]
-        read_sock, write_sock, error_sock = select.select(socket_list, [], [])
-
-        if len(write_sock) != 0 and len(my_message) != 0:
-            for sock in write_sock:
-                send_data_to_server(my_message, sock)
+        if len(my_message) != 0:
+            send_data_to_server(my_message, sock)
             my_message = ""
 
-        if len(read_sock) != 0:
-            for sock in read_sock:
-                receive_data_from_server(sock)
+        receive_data_from_server(sock)
 
 
 
