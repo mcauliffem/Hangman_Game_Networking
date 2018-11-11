@@ -41,9 +41,9 @@ def receive_data_from_server(sock):
             word_itself = str(data[3: word_length + 3])
             incorrect_guesses = data[(word_length + 3): (word_length + num_incorrect + 3)]
             data = data[(word_length + num_incorrect + 3):]
-            print("\n" + word_itself + "\n" + "Incorrect Guesses: ")
+            print("\n" + word_itself + "\n" + "Incorrect Guesses: ", end="")
             for letter in incorrect_guesses:
-                print(letter)
+                print(letter, end="")
             print("\n\n")
             valid_input = False
             guess = ""
@@ -57,7 +57,7 @@ def receive_data_from_server(sock):
                     print("\n Input already guessed: guess again")
                 else:
                     valid_input = True
-            Message.my_message = (bytes(guess, 'utf-8')).decode('UTF-8')
+            Message.my_message = guess
         else:
             server_message = str(data[1: int(msg_flag) + 1])
             data = data[int(msg_flag) + 1:]
