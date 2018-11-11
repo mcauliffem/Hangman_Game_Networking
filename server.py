@@ -33,6 +33,12 @@ def accept_wrapper(sock):
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(conn, events, data=data)
 
+    Server.num_games += 1
+    letters = parse_word(choose_word())
+    blanks = make_blanks(letters)
+    #                       {numletters, full word, partial, incorret_num}
+    Server.game_states[addr] = [len(letters), letters, blanks, 0, True, [], False]
+
 # deal with data from preexisting connections
 def service_connection(key, mask):
     sock = key.fileobj
@@ -44,67 +50,81 @@ def service_connection(key, mask):
         if len(recv_data) > 0:
             if recv_data == b'10':
                 msg_flag = chr(0)
-                word_size = Server.game_states[sock.getsockname()][0]
-                num_incorrect = Server.game_states[sock.getsockname()][3]
-                guesses = Server.game_states[sock.getsockname()][2]
+                word_size = Server.game_states[sock.getpeername()][0]
+                num_incorrect = Server.game_states[sock.getpeername()][3]
+                guesses = Server.game_states[sock.getpeername()][2]
                 data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
+            if recv_data == b'12':
+                found = False
+                for state_key in list(Server.game_states.keys()):
+                    print(state_key)
+                    print(Server.game_states[state_key][6])
+                    if Server.game_states[state_key][6] == False and Server.game_states[state_key] != Server.game_states[sock.getpeername()] and found == False:
+                        Server.game_states[state_key][6] = True
+                        Server.game_states[sock.getpeername()] = Server.game_states[state_key]
+                        found = True
+                        data.outb += bytes(chr(16) + 'Players Matched!', 'utf-8')
+                if found == False:
+                    data.outb += bytes(chr(27) + 'Waiting for another player!', 'utf-8')
             else:
                 data_len = int(recv_data[0])
                 in_data = chr(int(recv_data[1]))
-                letters = Server.game_states[sock.getsockname()][1]
+                letters = Server.game_states[sock.getpeername()][1]
                 correct = False
                 for i in range(len(letters)):
                     if letters[i] == in_data:
-                        Server.game_states[sock.getsockname()][2][i] = letters[i]
+                        Server.game_states[sock.getpeername()][2][i] = letters[i]
                         correct = True
                 if correct == False:
-                    Server.game_states[sock.getsockname()][5].append(in_data)
-                    Server.game_states[sock.getsockname()][3] += 1
-                    if Server.game_states[sock.getsockname()][3] >= 6:
+                    Server.game_states[sock.getpeername()][5].append(in_data)
+                    Server.game_states[sock.getpeername()][3] += 1
+                    if Server.game_states[sock.getpeername()][3] >= 6:
                         #game over
                         data.outb += bytes(chr(9) + 'YOU LOSE!', 'utf-8')
                         data.outb += bytes( chr(10) + 'GAME OVER!', 'utf-8')
-                        Server.game_states[sock.getsockname()][4] = False;
+                        Server.game_states[sock.getpeername()][4] = False;
                         return
                     msg_flag = chr(0)
-                    word_size = Server.game_states[sock.getsockname()][0]
-                    num_incorrect = Server.game_states[sock.getsockname()][3]
-                    guesses = Server.game_states[sock.getsockname()][2]
-                    incorrect = str(''.join(Server.game_states[sock.getsockname()][5]))
+                    word_size = Server.game_states[sock.getpeername()][0]
+                    num_incorrect = Server.game_states[sock.getpeername()][3]
+                    guesses = Server.game_states[sock.getpeername()][2]
+                    incorrect = str(''.join(Server.game_states[sock.getpeername()][5]))
                     data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses)) + incorrect).encode('UTF-8')
 
                 else:
                     all_correct = True
                     for i in range(len(letters)):
-                        if Server.game_states[sock.getsockname()][2][i] != letters[i]:
+                        if Server.game_states[sock.getpeername()][2][i] != letters[i]:
                             all_correct = False
                     if all_correct == True:
                         data.outb += bytes(chr(8) + 'YOU WIN!', 'utf-8')
                         data.outb += bytes(chr(10) + 'GAME OVER!', 'utf-8')
-                        Server.game_states[sock.getsockname()][4] = False;
+                        Server.game_states[sock.getpeername()][4] = False;
                     else:
                         msg_flag = chr(0)
-                        word_size = Server.game_states[sock.getsockname()][0]
-                        num_incorrect = Server.game_states[sock.getsockname()][3]
-                        guesses = Server.game_states[sock.getsockname()][2]
-                        incorrect = str(''.join(Server.game_states[sock.getsockname()][5]))
+                        word_size = Server.game_states[sock.getpeername()][0]
+                        num_incorrect = Server.game_states[sock.getpeername()][3]
+                        guesses = Server.game_states[sock.getpeername()][2]
+                        incorrect = str(''.join(Server.game_states[sock.getpeername()][5]))
                         data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses)) + incorrect).encode('UTF-8')
         else:
             print('closing connection to', data.addr)
             sel.unregister(sock)
             sock.close()
             Server.num_games -= 1
+            del Server.game_states[sock.getpeername()]
 
     if mask & selectors.EVENT_WRITE:
         if data.outb:
             print('echoing', repr(data.outb), 'to', data.addr)
             sent = sock.send(data.outb)  # Should be ready to write
             data.outb = data.outb[sent:]
-            if Server.game_states[sock.getsockname()][4] == False:
+            if Server.game_states[sock.getpeername()][4] == False:
                 print('closing connection to', data.addr)
                 sel.unregister(sock)
                 sock.close()
                 Server.num_games -= 1
+                del Server.game_states[sock.getpeername()]
 
 
 if __name__ == '__main__':
@@ -128,11 +148,6 @@ if __name__ == '__main__':
             if key.data is None:
                 if Server.num_games < 3:
                     accept_wrapper(key.fileobj)
-                    Server.num_games += 1
-                    letters = parse_word(choose_word())
-                    blanks = make_blanks(letters)
-                    #                       {numletters, full word, partial, incorret_num}
-                    Server.game_states[key.fileobj.getsockname()] = [len(letters), letters, blanks, 0, True, []]
                 else:
                     key.fileobj.send(bytes(chr(16) + "server-overloaded", 'utf-8'))
                     key.fileobj.close()

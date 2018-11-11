@@ -35,8 +35,6 @@ def receive_data_from_server(sock):
 
     if len(data) != 0:
         msg_flag = int(ord(data[0]))
-        if msg_flag > 9:
-            msg
         if msg_flag == 0:
             word_length = int(data[1])
             num_incorrect = int(data[2])
@@ -77,10 +75,13 @@ if __name__ == "__main__":
     host = sys.argv[1]
     port = int(sys.argv[2])
     my_socket = start_connection(host, port);
-    choice = input("Ready to start game? (y/n): ")
-    if choice == "y":
+    choice = input("Two Player? (y/n): ")
+    if choice == "n":
         Message.playing = True
         Message.my_message = "0"
+    elif choice == "y":
+        Message.playing = True
+        Message.my_message = "2"
     else:
         print("closing connection!\n")
         my_socket.close()
