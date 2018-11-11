@@ -6,6 +6,7 @@ import time
 class Message:
     my_message = ""
     playing = False
+    incorrect_guesses = []
 
 def start_connection(host, port):
     server_addr = (host, port)
@@ -20,7 +21,6 @@ def send_data_to_server(message, socket):
     message_length = str(len(message)).encode('UTF-8')
     final_message = b"".join([message_length, message_converted])
     socket.send(final_message)
-    print(final_message)
 
 def receive_data_from_server(sock):
     data = ""
@@ -34,7 +34,9 @@ def receive_data_from_server(sock):
             raise ex
 
     if len(data) != 0:
-        msg_flag = int(data[0])
+        msg_flag = int(ord(data[0]))
+        if msg_flag > 9:
+            msg
         if msg_flag == 0:
             word_length = int(data[1])
             num_incorrect = int(data[2])
@@ -52,17 +54,19 @@ def receive_data_from_server(sock):
                     print("\n Invalid Input: Please enter a valid letter a-z")
                 elif ord(guess) > 122 or ord(guess) < 97:
                     print("\n Invalid Input: Please enter a valid letter a-z")
+                elif guess in incorrect_guesses or guess in word_itself:
+                    print("\n Input already guessed: guess again")
                 else:
                     valid_input = True
             Message.my_message = (bytes(guess, 'utf-8')).decode('UTF-8')
         else:
-            while len(data) > int(data[0]) + 1:
+            while len(data) > int(ord(data[0])) + 1:
                 server_message = str(data[1: int(msg_flag) + 1])
                 print(server_message + "\n")
                 data = data[int(msg_flag) + 1:]
-                msg_flag = data[0]
+                msg_flag = ord(data[0])
             server_message = str(data[1: int(msg_flag) + 1])
-            if server_message == "GAME OVER":
+            if server_message == "GAME OVER!":
                 sock.close()
                 Message.playing = False
             print(server_message + "\n")
