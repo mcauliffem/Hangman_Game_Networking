@@ -1,42 +1,67 @@
 import selectors
 import socket
-
-
-messages = [b'Message 1 from client.', b'Message 2 from client.']
-
-
+import sys
 
 def start_connection(host, port):
     server_addr = (host, port)
-    connid = i + 1
-    print('starting connection', connid, 'to', server_addr)
+    print('starting connection to', server_addr)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setblocking(False)
     sock.connect_ex(server_addr)
-    events = selectors.EVENT_READ | selectors.EVENT_WRITE
-    data = types.SimpleNamespace(connid=connid,
-                                 msg_total=sum(len(m) for m in messages),
-                                 recv_total=0,
-                                 messages=list(messages),
-                                 outb=b'')
-    sel.register(sock, events, data=data)
+    return sock
 
-def service_connection(key, mask):
-    sock = key.fileobj
-    data = key.data
-    if mask & selectors.EVENT_READ:
-        recv_data = sock.recv(1024)  # Should be ready to read
-        if recv_data:
-            print('received', repr(recv_data), 'from connection', data.connid)
-            data.recv_total += len(recv_data)
-        if not recv_data or data.recv_total == data.msg_total:
-            print('closing connection', data.connid)
-            sel.unregister(sock)
-            sock.close()
-    if mask & selectors.EVENT_WRITE:
-        if not data.outb and data.messages:
-            data.outb = data.messages.pop(0)
-        if data.outb:
-            print('sending', repr(data.outb), 'to connection', data.connid)
-            sent = sock.send(data.outb)  # Should be ready to write
-            data.outb = data.outb[sent:]
+def send_data_to_server(message, socket):
+    message_converted = message.encode('UTF-8')
+    message_length = len(message).encode('UTF-8')
+    final_message = b"".join([message_length, message_converted])
+    socket.send(final_message)
+
+def receive_data_from_server(socket):
+    data = sock.recv(1024).decode('UTF-8')
+    if data:
+        msg_flag = data[0]
+        if msg_flag == 0:
+            word_length = data[1]
+            num_incorrect = data[2]
+            word_itself = data[3: word_length + 3]
+            incorrect_guesses = [word_length + 3: word_length + num_incorrect + 3]
+            print("\n" + word_itself + "\n" + "Incorrect Guesses: ")
+            for letter in incorrect_guesses:
+                print(letter)
+            print("\n\n")
+            guess = input("Letter to guess: ")
+            my_message = guess
+        else:
+            server_message = [1: msg_flag + 1]
+            print(server_message)
+
+
+if __name__ == "__main__":
+
+    host = sys.argv[1]
+    port = sys.argv[2]
+    my_message = ""
+    my_socket = start_connection(host, port);
+    playing = False
+    choice = input("Ready to start game? (y/n): ")
+    if choice == "y":
+        playing = True
+        my_message = "0"
+    else:
+        print("closing connection!\n")
+        my_socket.close()
+        print("connection closed!\n")
+
+    while playing:
+
+        socket_list = [sys.stdin, my_socket]
+        read_sock, write_sock, error_sock = select.select(socket_list, [], [])
+
+        if len(write_sock) != 0 and len(my_message) != 0:
+            for sock in write_sock:
+                send_data_to_server(my_message, sock)
+            my_message = ""
+
+        if len(read_sock) != 0:
+            for sock in read_sock:
+                receive_data_from_server(sock)
