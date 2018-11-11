@@ -24,7 +24,7 @@ def receive_data_from_server(socket):
             word_length = data[1]
             num_incorrect = data[2]
             word_itself = data[3: word_length + 3]
-            incorrect_guesses = [word_length + 3: word_length + num_incorrect + 3]
+            incorrect_guesses = data[(word_length + 3): (word_length + num_incorrect + 3)]
             print("\n" + word_itself + "\n" + "Incorrect Guesses: ")
             for letter in incorrect_guesses:
                 print(letter)
@@ -32,14 +32,14 @@ def receive_data_from_server(socket):
             guess = input("Letter to guess: ")
             my_message = guess
         else:
-            server_message = [1: msg_flag + 1]
+            server_message = data[1: msg_flag + 1]
             print(server_message)
 
 
 if __name__ == "__main__":
 
     host = sys.argv[1]
-    port = sys.argv[2]
+    port = int(sys.argv[2])
     my_message = ""
     my_socket = start_connection(host, port);
     playing = False
