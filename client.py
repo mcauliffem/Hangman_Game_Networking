@@ -12,12 +12,12 @@ def start_connection(host, port):
 
 def send_data_to_server(message, socket):
     message_converted = message.encode('UTF-8')
-    message_length = len(message).encode('UTF-8')
+    message_length = str(len(message)).encode('UTF-8')
     final_message = b"".join([message_length, message_converted])
     socket.send(final_message)
 
 def receive_data_from_server(socket):
-    data = sock.recv(1024).decode('UTF-8')
+    data = socket.recv(1024).decode('UTF-8')
     if data:
         msg_flag = data[0]
         if msg_flag == 0:
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     choice = input("Ready to start game? (y/n): ")
     if choice == "y":
         playing = True
-        my_message = b'1y'
+        my_message = "0"
     else:
         print("closing connection!\n")
         my_socket.close()
@@ -62,10 +62,10 @@ if __name__ == "__main__":
     while playing:
 
         if len(my_message) != 0:
-            send_data_to_server(my_message, sock)
+            send_data_to_server(my_message, my_socket)
             my_message = ""
 
-        receive_data_from_server(sock)
+        receive_data_from_server(my_socket)
 
 
 
