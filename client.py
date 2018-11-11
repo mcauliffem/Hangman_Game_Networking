@@ -18,12 +18,12 @@ def send_data_to_server(message, socket):
     print(final_message)
 
 def receive_data_from_server(socket):
-    data = socket.recv(1024).decode('UTF-8')
-    if data:
+    data = (socket.recv(1024)).decode('UTF-8')
+    if len(data) != 0:
         msg_flag = data[0]
         if msg_flag == 0:
-            word_length = data[1]
-            num_incorrect = data[2]
+            word_length = int(data[1])
+            num_incorrect = int(data[2])
             word_itself = data[3: word_length + 3]
             incorrect_guesses = data[(word_length + 3): (word_length + num_incorrect + 3)]
             print("\n" + word_itself + "\n" + "Incorrect Guesses: ")
@@ -38,7 +38,7 @@ def receive_data_from_server(socket):
                     print("\n Invalid Input: Please enter a valid letter a-z")
                 else:
                     valid_input = True
-            my_message = b'1' + bytes(guess, 'utf-8')
+            my_message = guess
         else:
             server_message = data[1: msg_flag + 1]
             print(server_message)
