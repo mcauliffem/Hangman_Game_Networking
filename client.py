@@ -29,8 +29,15 @@ def receive_data_from_server(socket):
             for letter in incorrect_guesses:
                 print(letter)
             print("\n\n")
-            guess = input("Letter to guess: ")
-            my_message = guess
+            valid_input = False
+            guess = ""
+            while valid_input == False:
+                guess = input("Letter to guess: ")
+                if ord(guess) > 122 or ord(guess) < 97:
+                    print("\n Invalid Input: Please enter a valid letter a-z")
+                else:
+                    valid_input = True
+            my_message = b'1' + bytes(guess, 'utf-8')
         else:
             server_message = data[1: msg_flag + 1]
             print(server_message)
@@ -46,7 +53,7 @@ if __name__ == "__main__":
     choice = input("Ready to start game? (y/n): ")
     if choice == "y":
         playing = True
-        my_message = "0"
+        my_message = b'1y'
     else:
         print("closing connection!\n")
         my_socket.close()
@@ -65,3 +72,7 @@ if __name__ == "__main__":
         if len(read_sock) != 0:
             for sock in read_sock:
                 receive_data_from_server(sock)
+
+
+
+

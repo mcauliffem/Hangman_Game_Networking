@@ -34,7 +34,6 @@ def accept_wrapper(sock):
 
 # deal with data from preexisting connections
 def service_connection(key, mask):
-    global num_games
     sock = key.fileobj
     data = key.data
     if mask & selectors.EVENT_READ:
