@@ -35,7 +35,13 @@ def accept_wrapper(sock):
     conn, addr = sock.accept()  # Should be ready to read
     print('accepted connection from', addr)
     conn.setblocking(False)
-
+    Server.num_games += 1
+    if Server.num_games > 3:
+        print('closing connection to', addr)
+        conn.send(bytes(chr(17) + "server-overloaded", 'utf-8'))
+        conn.close()
+        Server.num_games -= 1
+        return
     data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(conn, events, data=data)
@@ -47,7 +53,7 @@ def accept_wrapper(sock):
         #else:
 
 
-    Server.num_games += 1
+
     letters = parse_word(choose_word())
     blanks = make_blanks(letters)
     #                       {numletters, full word, partial, incorret_num}
@@ -177,11 +183,7 @@ if __name__ == '__main__':
         events = sel.select(timeout=None)
         for key, mask in events:
             if key.data is None:
-                if Server.num_games < 3:
-                    accept_wrapper(key.fileobj)
-                else:
-                    key.fileobj.send(bytes(chr(16) + "server-overloaded", 'utf-8'))
-                    key.fileobj.close()
+                accept_wrapper(key.fileobj)
             else:
                 service_connection(key, mask)
 

@@ -62,9 +62,16 @@ def receive_data_from_server(sock):
             server_message = str(data[1: int(msg_flag) + 1])
             data = data[int(msg_flag) + 1:]
             if server_message == "GAME OVER!":
+                print(server_message + "\n")
                 sock.close()
                 Message.playing = False
-            print(server_message + "\n")
+            elif server_message == "server-overloaded":
+                print(server_message + "\n")
+                print("closing connection!\n")
+                sock.close()
+                Message.playing = False
+            else:
+                print(server_message + "\n")
 
 
 if __name__ == "__main__":
