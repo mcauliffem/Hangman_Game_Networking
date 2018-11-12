@@ -2,7 +2,12 @@ import selectors
 import socket
 import random
 import sys
-import types
+import
+
+######################## Server.py ########################################
+# Contributors: Matt McAuliffe and Kyle Suter                             #
+# CS 3251: Networking, Programming Project 2, Fall 2018                   #
+###########################################################################
 
 # words
 word_bank = ['cat', 'dog', 'fish', 'bull', 'koala', 'otter', 'zebra', 'snakes',

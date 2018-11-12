@@ -3,6 +3,11 @@ import socket
 import sys
 import time
 
+######################## Client.py ########################################
+# Contributors: Matt McAuliffe and Kyle Suter                             #
+# CS 3251: Networking, Programming Project 2, Fall 2018                   #
+###########################################################################
+
 class Message:
     my_message = ""
     playing = False
@@ -10,7 +15,6 @@ class Message:
 
 def start_connection(host, port):
     server_addr = (host, port)
-    print('starting connection to', server_addr)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setblocking(False)
     sock.connect_ex(server_addr)
