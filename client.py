@@ -18,7 +18,7 @@ def start_connection(host, port):
 
 def send_data_to_server(message, socket):
     message_converted = message.encode('UTF-8')
-    message_length = chr(len(message)).encode('UTF-8')
+    message_length = str(len(message)).encode('UTF-8')
     final_message = b"".join([message_length, message_converted])
     socket.send(final_message)
 
