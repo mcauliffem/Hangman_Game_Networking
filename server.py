@@ -21,13 +21,13 @@ def make_blanks(letters):
     return blanks
 class Server:
     num_games = 0
-    game_states = dict()
     games = []
 
 class Game:
     def __init__(multi):
         multiplayer = multi
         clients = []
+        game_states = dict()
 
 def add_client_to_game(socket, multi):
     if Server.num_games == 0 or multi == False:
@@ -50,6 +50,17 @@ def remove_client_from_game(socket):
             if len(Server.games[i].clients) == 0:
                 del(Server.games[i])
                 Server.num_games -= 1
+
+def send_message_to_fellow_socks(socket, message):
+    the_client = None
+    for i in range(0, len(Server.games)):
+        if socket in Server.games[i].clients:
+            for j in range(0, len(Server.games[i].clients)):
+                if Server.games[i].clients[j] != socket:
+                    msg_len = chr(len(message)).encode('UTF-8')
+                    msg_converted = message.encode('UTF-8')
+                    final_msg = b''.join([msg_len, msg_converted])
+                    socket.send(final_msg)
 
 # create and register new connection
 def accept_wrapper(sock):
