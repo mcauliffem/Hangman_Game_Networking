@@ -2,7 +2,7 @@ import selectors
 import socket
 import random
 import sys
-import
+import types
 
 ######################## Server.py ########################################
 # Contributors: Matt McAuliffe and Kyle Suter                             #
@@ -56,7 +56,7 @@ def add_client_to_game(socket, multi):
                 print("sucessfully added client")
 
 def remove_client_from_game(socket):
-    int adjust = 0
+    adjust = 0
     for i in range(0, len(Server.games)):
         if socket in Server.games[i - adjust].clients:
             Server.games[i - adjust].clients.remove(socket)
@@ -106,6 +106,7 @@ def accept_wrapper(sock):
     data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(conn, events, data=data)
+    conn.send(bytes(chr(12) + "Game Started", 'utf-8'))
 
 
 
