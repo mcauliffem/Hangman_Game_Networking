@@ -29,6 +29,27 @@ class Game:
         multiplayer = multi
         clients = []
 
+def add_client_to_game(socket, multi):
+    if Server.num_games == 0 or multi == False:
+        new_game = Game()
+        new_game.multiplayer = multi
+        new_game.clients.append(socket)
+        Server.games.append(new_game)
+        Server.num_games += 1
+    else:
+        added = False
+        for i in range(0, len(Server.games)):
+            if added == False and Server.games[i].multiplayer == True and len((Server.games)[i].clients) < 2:
+                added = True
+                Server.games[i].clients.append(socket)
+
+def remove_client_from_game(socket):
+    for i in range(0, len(Server.games)):
+        if socket in Server.games[i].clients:
+            Server.games[i].clients.remove(socket)
+            if len(Server.games[i].clients) == 0:
+                del(Server.games[i])
+                Server.num_games -= 1
 
 # create and register new connection
 def accept_wrapper(sock):
