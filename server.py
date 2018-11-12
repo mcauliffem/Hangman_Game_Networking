@@ -51,11 +51,13 @@ def add_client_to_game(socket, multi):
                 print("sucessfully added client")
 
 def remove_client_from_game(socket):
+    int adjust = 0
     for i in range(0, len(Server.games)):
-        if socket in Server.games[i].clients:
-            Server.games[i].clients.remove(socket)
-            if len(Server.games[i].clients) == 0:
-                del(Server.games[i])
+        if socket in Server.games[i - adjust].clients:
+            Server.games[i - adjust].clients.remove(socket)
+            adjust += 1
+            if len(Server.games[i - adjust].clients) == 0:
+                del(Server.games[i - adjust])
                 Server.num_games -= 1
 
 def close_matching_sock(sock):
