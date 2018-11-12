@@ -45,6 +45,7 @@ def add_client_to_game(socket, multi):
         Server.games.append(new_game)
         Server.num_games += 1
         print("Sucessfully created game")
+        return new_game
     else:
         added = False
         for i in range(0, len(Server.games)):
@@ -54,6 +55,7 @@ def add_client_to_game(socket, multi):
                 for client in Server.games[i].clients:
                     Server.multigame_clients.append(client)
                 print("sucessfully added client")
+                return Server.games[i]
 
 def remove_client_from_game(socket):
     adjust = 0
@@ -135,27 +137,22 @@ def service_connection(key, mask):
                 data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
             elif recv_data == b'12':
                 print("multi")
-                add_client_to_game(sock, True)
-                found = False
-                for state_key in list(Game.game_states.keys()):
-                    print(state_key)
-                    if Game.game_states[state_key][6] == False and Game.game_states[state_key] != Game.game_states[sock.getpeername()] and found == False:
-                        Game.game_states[state_key][6] = True
-                        Game.game_states[sock.getpeername()] = Game.game_states[state_key]
-                        Game.game_states[state_key][7] = key
-                        found = True
-                        data.outb += bytes(chr(16) + 'Players Matched!', 'utf-8')
-
-                        msg_flag = chr(0)
-                        word_size = Game.game_states[sock.getpeername()][0]
-                        num_incorrect = Game.game_states[sock.getpeername()][3]
-                        guesses = Game.game_states[sock.getpeername()][2]
-                        data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
-                        send_message_to_fellow_socks(sock, "waiting for other player to guess")
-                    print(Game.game_states[state_key][6])
-                if found == False:
+                game = add_client_to_game(sock, True)
+                if len(game.clients) < 2:
                     Game.game_states[sock.getpeername()][7] = key
                     data.outb += bytes(chr(27) + 'Waiting for another player!', 'utf-8')
+                else:
+                    for client in game.clients:
+                        Game.game_states[client.getpeername()] = Game.game_states[sock.getpeername()]
+
+                    data.outb += bytes(chr(16) + 'Players Matched!', 'utf-8')
+
+                    msg_flag = chr(0)
+                    word_size = Game.game_states[sock.getpeername()][0]
+                    num_incorrect = Game.game_states[sock.getpeername()][3]
+                    guesses = Game.game_states[sock.getpeername()][2]
+                    data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
+                    send_message_to_fellow_socks(sock, "waiting for other player to guess")
             else:
                 if sock not in Server.multigame_clients:
                     data_len = int(recv_data[0])
