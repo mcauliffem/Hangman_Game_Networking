@@ -1,7 +1,9 @@
+from __future__ import print_function
 import select
 import socket
 import sys
 import time
+
 
 ######################## Client.py ########################################
 # Contributors: Matt McAuliffe and Kyle Suter                             #
@@ -35,6 +37,9 @@ def receive_data_from_server(sock):
             if str(ex) == "[Errno 35] Resource temporarily unavailable":
                 time.sleep(0)
                 continue
+            elif str(ex) == "[Errno 11] Resource temporarily unavailable":
+                time.sleep(0)
+                continue
             raise ex
 
     while len(data) != 0:
@@ -52,7 +57,7 @@ def receive_data_from_server(sock):
             valid_input = False
             guess = ""
             while valid_input == False:
-                guess = input("Letter to guess: ")
+                guess = raw_input("Letter to guess: ")
                 if guess == '':
                     print("\n Invalid Input: Please enter a valid letter a-z")
                 elif ord(guess) > 122 or ord(guess) < 97:
@@ -83,7 +88,7 @@ if __name__ == "__main__":
     host = sys.argv[1]
     port = int(sys.argv[2])
     my_socket = start_connection(host, port);
-    choice = input("Two Player? (y/n): ")
+    choice = raw_input("Two Player? (y/n): ")
     if choice == "n":
         Message.playing = True
         Message.my_message = "0"

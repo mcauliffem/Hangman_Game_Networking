@@ -1,4 +1,4 @@
-import selectors
+import selectors2 as selectors
 import socket
 import random
 import sys
@@ -36,6 +36,12 @@ class Game:
     multiplayer = False
     clients = []
     game_states = dict()
+
+class Data:
+    def __init__(self, address):
+        self.addr = address
+        self.inb = b''
+        self.outb = b''
 
 def add_client_to_game(socket, multi):
     if Server.num_games == 0 or multi == False:
@@ -102,13 +108,13 @@ def accept_wrapper(sock):
     conn.setblocking(False)
     if Server.num_games > 2:
         print('closing connection to', addr)
-        conn.send(bytes(chr(17) + "server-overloaded", 'utf-8'))
+        conn.send(bytes(chr(17) + "server-overloaded"))
         conn.close()
         return
-    data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
+    data = Data(addr)
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(conn, events, data=data)
-    conn.send(bytes(chr(12) + "Game Started", 'utf-8'))
+    conn.send(bytes(chr(12) + "Game Started"))
 
 
 
@@ -116,6 +122,7 @@ def accept_wrapper(sock):
     blanks = make_blanks(letters)
     #                       {numletters, full word, partial, incorret_num}
     Game.game_states[addr] = [len(letters), letters, blanks, 0, True, [], False, None]
+
 
 
 # deal with data from preexisting connections
@@ -140,12 +147,12 @@ def service_connection(key, mask):
                 game = add_client_to_game(sock, True)
                 if len(game.clients) < 2:
                     Game.game_states[sock.getpeername()][7] = key
-                    data.outb += bytes(chr(27) + 'Waiting for another player!', 'utf-8')
+                    data.outb += bytes(chr(27) + 'Waiting for another player!')
                 else:
                     for client in game.clients:
-                        Game.game_states[client.getpeername()] = Game.game_states[sock.getpeername()]
+                        Game.game_states[sock.getpeername()] = Game.game_states[client.getpeername()]
 
-                    data.outb += bytes(chr(16) + 'Players Matched!', 'utf-8')
+                    data.outb += bytes(chr(16) + 'Players Matched!')
 
                     msg_flag = chr(0)
                     word_size = Game.game_states[sock.getpeername()][0]
@@ -156,7 +163,7 @@ def service_connection(key, mask):
             else:
                 if sock not in Server.multigame_clients:
                     data_len = int(recv_data[0])
-                    in_data = chr(int(recv_data[1]))
+                    in_data = recv_data[1]
                     letters = Game.game_states[sock.getpeername()][1]
                     correct = False
                     for i in range(len(letters)):
@@ -168,8 +175,8 @@ def service_connection(key, mask):
                         Game.game_states[sock.getpeername()][3] += 1
                         if Game.game_states[sock.getpeername()][3] >= 6:
                             #game over
-                            data.outb += bytes(chr(9) + 'YOU LOSE!', 'utf-8')
-                            data.outb += bytes( chr(10) + 'GAME OVER!', 'utf-8')
+                            data.outb += bytes(chr(9) + 'YOU LOSE!')
+                            data.outb += bytes( chr(10) + 'GAME OVER!')
                             Game.game_states[sock.getpeername()][4] = False;
                             remove_client_from_game(sock)
                             return
@@ -186,8 +193,8 @@ def service_connection(key, mask):
                             if Game.game_states[sock.getpeername()][2][i] != letters[i]:
                                 all_correct = False
                         if all_correct == True:
-                            data.outb += bytes(chr(8) + 'YOU WIN!', 'utf-8')
-                            data.outb += bytes(chr(10) + 'GAME OVER!', 'utf-8')
+                            data.outb += bytes(chr(8) + 'YOU WIN!')
+                            data.outb += bytes(chr(10) + 'GAME OVER!')
                             Game.game_states[sock.getpeername()][4] = False;
                             remove_client_from_game(sock)
                         else:
@@ -199,23 +206,23 @@ def service_connection(key, mask):
                             data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses)) + incorrect).encode('UTF-8')
                 else:
                     data_len = int(recv_data[0])
-                    in_data = chr(int(recv_data[1]))
+                    in_data = recv_data[1]
                     letters = Game.game_states[sock.getpeername()][1]
                     correct = False
                     for i in range(len(letters)):
                         if letters[i] == in_data:
                             Game.game_states[sock.getpeername()][2][i] = letters[i]
                             correct = True
-                    data.outb += bytes((chr(8)+"Correct!") if correct else (chr(12) + "Incorrect :(") , 'utf-8')
-                    data.outb += bytes(chr(21) + "Other players turn..." , 'utf-8')
+                    data.outb += bytes((chr(8)+"Correct!") if correct else (chr(12) + "Incorrect :("))
+                    data.outb += bytes(chr(21) + "Other players turn...")
 
                     if correct == False:
                         Game.game_states[sock.getpeername()][5].append(in_data)
                         Game.game_states[sock.getpeername()][3] += 1
                         if Game.game_states[sock.getpeername()][3] >= 6:
                             #game over
-                            data.outb += bytes(chr(9) + 'YOU LOSE!', 'utf-8')
-                            data.outb += bytes( chr(10) + 'GAME OVER!', 'utf-8')
+                            data.outb += bytes(chr(9) + 'YOU LOSE!')
+                            data.outb += bytes( chr(10) + 'GAME OVER!')
                             Game.game_states[sock.getpeername()][4] = False;
                             send_message_to_fellow_socks(sock, 'YOU LOSE!')
                             send_message_to_fellow_socks(sock, 'GAME OVER!')
@@ -235,8 +242,8 @@ def service_connection(key, mask):
                             if Game.game_states[sock.getpeername()][2][i] != letters[i]:
                                 all_correct = False
                         if all_correct == True:
-                            data.outb += bytes(chr(8) + 'YOU WIN!', 'utf-8')
-                            data.outb += bytes(chr(10) + 'GAME OVER!', 'utf-8')
+                            data.outb += bytes(chr(8) + 'YOU WIN!')
+                            data.outb += bytes(chr(10) + 'GAME OVER!')
                             Game.game_states[sock.getpeername()][4] = False;
                             send_message_to_fellow_socks(sock, 'YOU WIN!')
                             send_message_to_fellow_socks(sock, 'GAME OVER!')
@@ -276,7 +283,7 @@ def service_connection(key, mask):
 
 
 if __name__ == '__main__':
-    host = '127.0.0.1'  # The server's hostname or IP address
+    host = '130.207.114.28'
     port = int(sys.argv[1])        # The port used by the server
 
     sel = selectors.DefaultSelector()
@@ -285,7 +292,7 @@ if __name__ == '__main__':
 
     lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     lsock.bind((host, port))
-    lsock.listen()
+    lsock.listen(10)
     print('listening on', (host, port))
     lsock.setblocking(False)
     sel.register(lsock, selectors.EVENT_READ, data=None)
