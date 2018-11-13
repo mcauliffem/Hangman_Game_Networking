@@ -30,7 +30,7 @@ def send_data_to_server(message, socket):
     message_length = str(len(message)).encode('UTF-8')
     final_message = b''
     # check for edge case starting messages
-    if message == "0" or message == "2":
+    if message == chr(0) or message == chr(2):
         final_message = b"".join([message_converted])
     else:
         final_message = b"".join([message_length, message_converted])
@@ -130,10 +130,10 @@ if __name__ == "__main__":
     choice = raw_input("Two Player? (y/n): ")
     if choice == "n":
         Message.playing = True
-        Message.my_message = "0"
+        Message.my_message = chr(0)
     elif choice == "y":
         Message.playing = True
-        Message.my_message = "2"
+        Message.my_message = chr(2)
     else:
         my_socket.close()
     #loop while the client is still playing

@@ -176,36 +176,37 @@ def service_connection(key, mask):
         # if data was received
         if len(recv_data) > 0:
             # if the data was a single player game start packet
-            if recv_data == b'0':
-                print('non-multi')
-                # add to game and send first data packet
-                add_client_to_game(sock, False)
-                msg_flag = chr(0)
-                word_size = Game.game_states[sock.getpeername()][0]
-                num_incorrect = Game.game_states[sock.getpeername()][3]
-                guesses = Game.game_states[sock.getpeername()][2]
-                data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
-            # if the data was a multi player game start packet
-            elif recv_data == b'2':
-                print("multi")
-                #add to game
-                game = add_client_to_game(sock, True)
-                # if connected to another player send data, otherwise tell to wait
-                if len(game.clients) < 2:
-                    Game.game_states[sock.getpeername()][7] = key
-                    data.outb += bytes(chr(27) + 'Waiting for another player!')
-                else:
-                    for client in game.clients:
-                        Game.game_states[sock.getpeername()] = Game.game_states[client.getpeername()]
-
-                    data.outb += bytes(chr(16) + 'Players Matched!')
-                    #send data to second player in game to get it started
+            if len(recv_data) == 1:
+                if ord(recv_data) == 0:
+                    print('non-multi')
+                    # add to game and send first data packet
+                    add_client_to_game(sock, False)
                     msg_flag = chr(0)
                     word_size = Game.game_states[sock.getpeername()][0]
                     num_incorrect = Game.game_states[sock.getpeername()][3]
                     guesses = Game.game_states[sock.getpeername()][2]
                     data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
-                    send_message_to_fellow_socks(sock, "waiting for other player to guess")
+                # if the data was a multi player game start packet
+                elif ord(recv_data) == 2:
+                    print("multi")
+                    #add to game
+                    game = add_client_to_game(sock, True)
+                    # if connected to another player send data, otherwise tell to wait
+                    if len(game.clients) < 2:
+                        Game.game_states[sock.getpeername()][7] = key
+                        data.outb += bytes(chr(27) + 'Waiting for another player!')
+                    else:
+                        for client in game.clients:
+                            Game.game_states[sock.getpeername()] = Game.game_states[client.getpeername()]
+
+                        data.outb += bytes(chr(16) + 'Players Matched!')
+                        #send data to second player in game to get it started
+                        msg_flag = chr(0)
+                        word_size = Game.game_states[sock.getpeername()][0]
+                        num_incorrect = Game.game_states[sock.getpeername()][3]
+                        guesses = Game.game_states[sock.getpeername()][2]
+                        data.outb += (str(msg_flag) + str(word_size) + str(num_incorrect) + str(''.join(guesses))).encode('UTF-8')
+                        send_message_to_fellow_socks(sock, "waiting for other player to guess")
             # if packet was not game start it is a data packet
             else:
                 #if the socket it is coming from is single player
