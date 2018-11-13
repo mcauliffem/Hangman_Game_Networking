@@ -396,7 +396,8 @@ def service_connection(key, mask):
 #sets up the connection to listen for incoming connection requests
 if __name__ == '__main__':
     # IP address of the shuttle3 gatech server
-    host = '130.207.114.28'
+    #host = '130.207.114.28'
+    host = str(socket.gethostbyname(socket.gethostname()))
     port = int(sys.argv[1])        # The port used by the server
 
     sel = selectors.DefaultSelector()

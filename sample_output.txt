@@ -1,0 +1,93 @@
+Single Player:
+-bash-4.1$ python client.py 130.207.114.28 65431
+Two Player? (y/n): n
+Game Started
+
+
+
+_ _ _
+Incorrect Guesses:
+
+Letter to guess: c
+
+
+_ _ _
+Incorrect Guesses: c
+
+Letter to guess: d
+
+
+d _ _
+Incorrect Guesses: c
+
+Letter to guess: o
+
+
+d o _
+Incorrect Guesses: c
+
+Letter to guess: g
+
+
+d o g
+Incorrect Guesses: c
+
+YOU WIN!
+
+GAME OVER!
+
+-bash-4.1$
+
+
+
+MultiPlayer:
+-bash-4.1$ python client.py 130.207.114.28 65431
+Two Player? (y/n): y
+Game Started
+
+Players Matched!
+
+
+
+_ _ _ _ _ _ _
+Incorrect Guesses:
+
+Letter to guess: g
+Correct!
+
+Other players turn...
+
+
+
+p _ _ g _ _ _
+Incorrect Guesses:
+
+Letter to guess: e
+Correct!
+
+Other players turn...
+
+
+
+p e n g _ _ n
+Incorrect Guesses:
+
+Letter to guess: u
+Correct!
+
+Other players turn...
+
+
+
+p e n g u i n
+Incorrect Guesses:
+
+YOU WIN!
+
+GAME OVER!
+
+-bash-4.1$ python client.py 130.207.114.28 65431
+Two Player? (y/n): n
+server-overloaded
+
+-bash-4.1$

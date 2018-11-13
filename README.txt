@@ -23,11 +23,17 @@ Distribution of work:
     -Comments: We both put in a lot of effort and we worked well together
 
 How to run our code:
-Run server on shuttle server 3 for connections to work, as IP is set to 130.207.114.28 in server.py main function (could change to IP of your preferred server)
-    python server.py <Port>
-    python client.py <130.207.114.28> <Port>
+
+step (1) can be run on any shuttle server and it will find it's own IP Address, simply enter a port
+(I like 65432)
+
+    (1) python server.py <Port>
+
+When the server (1) is run, it prints "listening on " followed by the IP address of the server and the port number. Use these as the inputs to the client
+
+    (2) python client.py <IP of server> <Port>
 
 The client will then ask if the game will be multiplayer
-    y will wait for another player
-    n will start single player mode.
+    "y" - will wait for another player
+    "n" - will start single player mode.
 Simply follow the instructions as they are displayed in the client terminal.
