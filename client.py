@@ -25,7 +25,11 @@ def start_connection(host, port):
 def send_data_to_server(message, socket):
     message_converted = message.encode('UTF-8')
     message_length = str(len(message)).encode('UTF-8')
-    final_message = b"".join([message_length, message_converted])
+    final_message = b''
+    if message == "0" or message == "2":
+        final_message = b"".join([message_converted])
+    else:
+        final_message = b"".join([message_length, message_converted])
     socket.send(final_message)
 
 def receive_data_from_server(sock):
@@ -50,23 +54,41 @@ def receive_data_from_server(sock):
             word_itself = str(data[3: word_length + 3])
             incorrect_guesses = data[(word_length + 3): (word_length + num_incorrect + 3)]
             data = data[(word_length + num_incorrect + 3):]
-            print("\n" + word_itself + "\n" + "Incorrect Guesses: ", end="")
+            spacecount = 0
+            print("\n")
+            for letter in word_itself:
+                print(letter, end="")
+                print(" ", end = "")
+                if letter == "_":
+                    spacecount += 1
+            print("\n" + "Incorrect Guesses: ", end="")
+            incorrect_count = 0
             for letter in incorrect_guesses:
+                incorrect_count += 1
                 print(letter, end="")
             print("\n")
-            valid_input = False
-            guess = ""
-            while valid_input == False:
-                guess = raw_input("Letter to guess: ")
-                if guess == '':
-                    print("\n Invalid Input: Please enter a valid letter a-z")
-                elif ord(guess) > 122 or ord(guess) < 97:
-                    print("\n Invalid Input: Please enter a valid letter a-z")
-                elif guess in incorrect_guesses or guess in word_itself:
-                    print("\n Input already guessed: guess again")
-                else:
-                    valid_input = True
-            Message.my_message = guess
+            spacecount = 0
+            for letter in word_itself:
+                if letter == "_":
+                    spacecount += 1
+            if incorrect_count <= 6 and spacecount != 0:
+                valid_input = False
+                guess = ""
+                while valid_input == False:
+                    guess = raw_input("Letter to guess: ")
+                    if guess == '':
+                        print("\n Invalid Input: Please enter a valid letter a-z")
+                    elif ord(guess) > 122 or ord(guess) < 97:
+                        if ord(guess) <= 90 or ord(guess) >= 65:
+                            guess = chr(ord(guess) + 32)
+                            valid_input = True
+                        else:
+                            print("\n Invalid Input: Please enter a valid letter a-z")
+                    elif guess in incorrect_guesses or guess in word_itself:
+                        print("\n Input already guessed: guess again")
+                    else:
+                        valid_input = True
+                Message.my_message = guess
         else:
             server_message = str(data[1: int(msg_flag) + 1])
             data = data[int(msg_flag) + 1:]
@@ -76,7 +98,6 @@ def receive_data_from_server(sock):
                 Message.playing = False
             elif server_message == "server-overloaded":
                 print(server_message + "\n")
-                print("closing connection!\n")
                 sock.close()
                 Message.playing = False
             else:
@@ -96,9 +117,7 @@ if __name__ == "__main__":
         Message.playing = True
         Message.my_message = "2"
     else:
-        print("closing connection!\n")
         my_socket.close()
-        print("connection closed!\n")
 
     while Message.playing:
 
